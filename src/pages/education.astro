@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import playlists from '../data/playlists.json';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const courses = [
   { name: 'Information Theory', when: 'Fall 2026', link: 'https://lincolnkerry.github.io/infotheory-2026/', live: true, desc: 'EC5301 — with AI TA and AI-graded homework. The pilot of our AI-native education format.' },
@@ -33,9 +34,25 @@ const courses = [
     <p class="sec-note" style="margin-top:20px">
       More: <a href={`${base}/archive/courses-wp`}>full course archive (2002–2026)</a> ·
       <a href={`${base}/archive/lectures`}>public lectures &amp; manuscripts (2016–2025)</a> ·
-      <a href="https://www.youtube.com/@heung-noleelabgist2902/videos">lab YouTube channel</a> ·
       <a href={`${base}/archive/media`}>media coverage</a>.
     </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Watch</h2>
+    <p class="sec-note">196+ lecture and seminar videos on the <a href={playlists.channel}>lab YouTube channel</a>, organized by playlist.</p>
+    {playlists.groups.map(g => (
+      <div style="margin-bottom:22px">
+        <h3 style="margin-bottom:10px">{g.title}</h3>
+        <div class="facts" style="margin-top:0">
+          {g.items.map(p => (
+            <span><a href={p.url}>{p.name}</a> <span style="color:var(--ink-soft)">({p.n})</span></span>
+          ))}
+        </div>
+      </div>
+    ))}
   </div>
 </section>
 </Base>
