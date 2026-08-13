@@ -38,5 +38,21 @@
  "media": {
   "title": "Media",
   "wp_id": "1698"
+ },
+ "genai-blockchain": {
+  "title": "Generative AI and Blockchain",
+  "wp_id": "30476"
+ },
+ "information-theory-2025": {
+  "title": "Information Theory 2025",
+  "wp_id": "30270"
+ },
+ "blockchain-future-society": {
+  "title": "Blockchain and Future Society 2019",
+  "wp_id": "6738"
+ },
+ "compressive-sensing": {
+  "title": "Compressive Sensing",
+  "wp_id": "336"
  }
 }
