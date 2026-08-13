@@ -17,7 +17,8 @@ cascades models, escalating only when a cheaper model's answer fails a check.
 
 The common structure: treat model selection as a decision problem
 minimizing cost subject to a quality constraint. This line of work directly informs
-our **GIST BizRouter** gateway, which applies the same principle for GIST members.
+our **PrivateRouter**, which applies the same principle for GIST members while
+keeping sensitive data under the user's control.
 
 *This article was drafted by the AI journalist from lab presentation notes and
 approved by a human editor.*
