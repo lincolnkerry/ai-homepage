@@ -43,7 +43,7 @@ const path = Astro.url.pathname;
       <div class="h">INFONET Lab</div>
       School of EECS &amp; AI Graduate School, GIST<br />
       EECS Building C315/317, Gwangju, Korea<br />
-      <a href="mailto:heungno@gist.ac.kr">heungno@gist.ac.kr</a>
+      <a href="#" class="em" data-u="heungno" data-d="gist.ac.kr">heungno [at] gist.ac.kr</a>
     </div>
     <div>
       <div class="h">Services</div>
@@ -60,5 +60,12 @@ const path = Astro.url.pathname;
   </div>
 </footer>
 <Concierge />
+<script is:inline>
+// Anti-scraper contact links: address assembled only on click.
+document.addEventListener('click', function (e) {
+  var a = e.target.closest && e.target.closest('a.em');
+  if (a) { e.preventDefault(); location.href = 'mailto:' + a.dataset.u + '@' + a.dataset.d; }
+});
+</script>
 </body>
 </html>
