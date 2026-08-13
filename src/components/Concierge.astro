@@ -20,7 +20,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     </form>
     <p class="cg-foot">
       Deep questions: <a href="https://github.com/lincolnkerry/ai-homepage/issues">GitHub Q&amp;A</a> ·
-      <a href="mailto:heungno@gist.ac.kr">heungno@gist.ac.kr</a>
+      <a href="#" class="em" data-u="heungno" data-d="gist.ac.kr">email</a>
     </p>
   </div>
 </div>
@@ -127,7 +127,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     }).then(function (d) {
       ansBox.textContent = d.answer;
     }).catch(function () {
-      ansBox.textContent = 'The AI answer service is not live yet — the links below are matched from the site. For a detailed answer, open a GitHub Q&A issue (mention @claude) or email heungno@gist.ac.kr.';
+      ansBox.textContent = 'The AI answer service is not live yet — the links below are matched from the site. For a detailed answer, open a GitHub Q&A issue (mention @claude) or use the email link below.';
     });
   }
 })();
