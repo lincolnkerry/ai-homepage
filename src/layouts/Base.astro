@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import Concierge from '../components/Concierge.astro';
 const { title = 'INFONET @ GIST', description = 'Information Sensing, Processing, Controlling, and Networking Laboratory — GIST. Information theory, AI systems, Web3 trust infrastructure.' } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const nav = [
@@ -58,5 +59,6 @@ const path = Astro.url.pathname;
     </div>
   </div>
 </footer>
+<Concierge />
 </body>
 </html>
