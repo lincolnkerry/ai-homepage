@@ -87,6 +87,21 @@ function search(question, limit = 4) {
   return scored.slice(0, limit);
 }
 
+// --- email redaction (CLAUDE.md 4b: never emit a plaintext email) ------------
+
+// Replace any email-looking string with a human-readable mask, so a raw
+// address that appears verbatim in a source document can never reach a client.
+const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+
+function redactEmails(text) {
+  if (typeof text !== 'string' || !text) return text;
+  return text.replace(EMAIL_RE, (addr) =>
+    addr
+      .replace(/@/g, ' [at] ')
+      .replace(/\.([A-Za-z]{2,})$/, ' [dot] $1')
+  );
+}
+
 // --- answer composition ------------------------------------------------------
 
 function composeAnswer(hits) {
@@ -200,15 +215,15 @@ const server = createServer((req, res) => {
 
       const hits = search(question, 4);
       if (hits.length === 0) {
-        sendJSON(res, 200, { answer: fallbackAnswer(), sources: [] });
+        sendJSON(res, 200, { answer: redactEmails(fallbackAnswer()), sources: [] });
         return;
       }
 
-      const answer = composeAnswer(hits);
+      const answer = redactEmails(composeAnswer(hits));
       const sources = hits.map((h) => ({
-        title: h.doc?.t || '',
-        url: h.doc?.u || '',
-        summary: h.doc?.s || '',
+        title: redactEmails(h.doc?.t || ''),
+        url: redactEmails(h.doc?.u || ''),
+        summary: redactEmails(h.doc?.s || ''),
       }));
       sendJSON(res, 200, { answer, sources });
     });
