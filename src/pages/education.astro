@@ -3,9 +3,11 @@ import Base from '../layouts/Base.astro';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const courses = [
   { name: 'Information Theory', when: 'Fall 2026', link: 'https://lincolnkerry.github.io/infotheory-2026/', live: true, desc: 'EC5301 — with AI TA and AI-graded homework. The pilot of our AI-native education format.' },
-  { name: 'Generative AI and Blockchain', when: 'Spring 2026', desc: 'Graduate course on generative AI systems and blockchain convergence.' },
-  { name: 'Blockchain and Future Society', when: 'STAR-MOOC', desc: 'Open online course, offered since 2018.' },
-  { name: 'Channel Coding Theory · Compressed Sensing · Wireless Communications', when: 'Archive', desc: 'Graduate course archive dating to 2009.' },
+  { name: 'Generative AI and Blockchain', when: 'Spring 2026', link: `${base}/archive/genai-blockchain`, desc: 'Graduate course on generative AI systems and blockchain convergence.' },
+  { name: 'Information Theory 2025', when: 'Fall 2025', link: `${base}/archive/information-theory-2025`, desc: 'Previous offering — lecture notes and course materials.' },
+  { name: 'Blockchain and Future Society', when: 'STAR-MOOC', link: `${base}/archive/blockchain-future-society`, desc: 'Open online course, offered since 2018.' },
+  { name: 'Introduction to Compressed Sensing', when: 'Archive', link: `${base}/archive/compressive-sensing`, desc: 'Graduate course and research materials on compressive sensing.' },
+  { name: 'Channel Coding Theory · Wireless Communications · more', when: 'Archive', link: `${base}/archive/courses-wp`, desc: 'Full course archive dating to 2002, including University of Pittsburgh years.' },
 ];
 ---
 <Base title="Education · INFONET @ GIST">

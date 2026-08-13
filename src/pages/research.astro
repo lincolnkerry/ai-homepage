@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import projects from '../data/projects.json';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const areas = { web3: 'Web3 · Blockchain', ai: 'Artificial Intelligence', signal: 'Signal Processing' };
 ---
 <Base title="Research · INFONET @ GIST">
@@ -19,9 +20,15 @@ const areas = { web3: 'Web3 · Blockchain', ai: 'Artificial Intelligence', signa
           <div class={`tag${p.area === 'web3' ? ' noise' : ''}`}>{areas[p.area] ?? p.area} · {p.period}</div>
           <h3>{p.title}</h3>
           <p>{p.summary}</p>
+          <div class="cta"><a href={p.period === 'upcoming' ? `${base}/archive/upcoming-projects-wp` : `${base}/archive/projects-wp`}>Details →</a></div>
         </div>
       ))}
     </div>
+    <p class="sec-note" style="margin-top:20px">
+      Full project descriptions: <a href={`${base}/archive/projects-wp`}>current projects</a> ·
+      <a href={`${base}/archive/upcoming-projects-wp`}>upcoming projects</a>.
+      Research stories: <a href={`${base}/news`}>News</a>.
+    </p>
   </div>
 </section>
 </Base>
