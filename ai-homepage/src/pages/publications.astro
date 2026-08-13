@@ -1,0 +1,73 @@
+---
+import Base from '../layouts/Base.astro';
+import pubs from '../data/publications.json';
+
+const groups = [
+  { key: 'international', title: 'International', sections: [
+    ['journal', 'Journal Papers'], ['conference', 'Conference / Workshop'], ['patents', 'Patents'] ] },
+  { key: 'domestic', title: 'Domestic', sections: [
+    ['journal', 'Journal Papers'], ['conference', 'Conference / Workshop'], ['patents', 'Patents'], ['magazine', 'Magazine Articles'] ] },
+  { key: 'dissertations', title: 'Dissertations & Others', sections: [
+    ['phd', 'Ph.D. Dissertations'], ['ms', "Master's Theses"], ['bs', "Bachelor's Theses"],
+    ['books', 'Books / Book Chapters'], ['reports', 'Technical Reports'], ['proposal', 'Open Proposal'] ] },
+];
+const total = Object.values(pubs).reduce((a, cat) => a + Object.values(cat).reduce((b, s) => b + s.length, 0), 0);
+const nIntJ = pubs.international.journal.length;
+---
+<Base title="Publications · INFONET @ GIST">
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Publications</div>
+    <h1>{total} papers, patents &amp; theses</h1>
+    <p class="sub">{nIntJ} international journal papers and the full archive since 2002 — migrated from the WordPress site, searchable below.</p>
+    <input id="pub-q" type="search" placeholder="Filter by author, title, venue, year… (e.g. compressed sensing 2012)"
+      style="margin-top:18px;width:100%;max-width:560px;padding:10px 14px;border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:.85rem;background:var(--card)" />
+    <div class="facts" id="pub-count"><span>{total} entries</span></div>
+  </div>
+</header>
+
+{groups.map(g => (
+  <section>
+    <div class="wrap">
+      <h2>{g.title}</h2>
+      {g.sections.filter(([k]) => pubs[g.key][k]?.length).map(([k, label], si) => (
+        <details open={g.key === 'international' && si === 0} style="margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:4px">
+          <summary style="cursor:pointer;padding:12px 16px;font-family:var(--serif);font-weight:600;font-size:1.05rem">
+            {label} <span style="font-family:var(--mono);font-size:.75rem;color:var(--ink-soft)">({pubs[g.key][k].length})</span>
+          </summary>
+          <ol reversed style="margin:0;padding:6px 20px 16px 44px">
+            {pubs[g.key][k].map(e => (
+              <li class="pub" data-t={`${e.text} ${e.year ?? ''}`.toLowerCase()} style="padding:6px 0;border-bottom:1px solid var(--grid);font-size:.88rem">
+                {e.text}
+                {e.links.length > 0 && (
+                  <span style="font-family:var(--mono);font-size:.75rem"> — {e.links.map((l, i) => (
+                    <span>{i > 0 && ' · '}<a href={l.url}>{l.label.length > 40 ? l.label.slice(0, 40) + '…' : l.label}</a></span>
+                  ))}</span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </details>
+      ))}
+    </div>
+  </section>
+))}
+
+<script>
+  const q = document.getElementById('pub-q');
+  const items = [...document.querySelectorAll('li.pub')];
+  const count = document.querySelector('#pub-count span');
+  const total = items.length;
+  q?.addEventListener('input', () => {
+    const terms = q.value.toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const li of items) {
+      const hit = terms.every(t => li.dataset.t.includes(t));
+      li.style.display = hit ? '' : 'none';
+      if (hit) shown++;
+    }
+    count.textContent = `${shown} / ${total} entries`;
+    if (terms.length) document.querySelectorAll('details').forEach(d => d.open = true);
+  });
+</script>
+</Base>

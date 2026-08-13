@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+const repos = [
+  { name: 'ETH-ECC', desc: 'Official node client of the WorldLand blockchain (Go)', url: 'https://github.com/cryptoecc/ETH-ECC' },
+  { name: 'WorldLand', desc: 'Go implementation of the WorldLand protocol', url: 'https://github.com/cryptoecc/WorldLand' },
+  { name: 'INFONET-Research', desc: 'Open research on AI, intelligent sensing, and hyperspectral imaging (Python)', url: 'https://github.com/cryptoecc/INFONET-Research' },
+  { name: 'worldland-sdk', desc: 'SDK for WorldLand development (Go)', url: 'https://github.com/cryptoecc/worldland-sdk' },
+  { name: 'WorldLand_Contracts', desc: 'Smart contracts (Solidity)', url: 'https://github.com/cryptoecc/WorldLand_Contracts' },
+  { name: 'worldland-miner', desc: 'One-click miner for Windows — Seoul Mainnet (ECCPoW)', url: 'https://github.com/cryptoecc/worldland-miner' },
+];
+const demos = [
+  { name: 'LV-RAG', desc: 'Enterprise RAG over your Excel/PDF data — inventory, production schedules, demand forecasting.', url: 'https://libervance.com' },
+  { name: '지름길 Shortcut', desc: 'Consumer AI shortcut service — try it live.', url: 'http://jireumgil.xyz' },
+  { name: 'Shortcut Compare', desc: 'Side-by-side model comparison.', url: 'http://nightly.jireumgil.xyz/compare' },
+];
+---
+<Base title="Code & Demos · INFONET @ GIST">
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Code &amp; Demos</div>
+    <h1>Download it. Run it.</h1>
+    <p class="sub">42 open repositories and live demos. Every paper page will link here — from theorem to running code.</p>
+  </div>
+</header>
+<section>
+  <div class="wrap">
+    <h2>Live demos</h2>
+    <div class="cards" style="margin-top:16px">
+      {demos.map(d => (
+        <div class="card">
+          <div class="tag">demo</div>
+          <h3>{d.name}</h3>
+          <p>{d.desc}</p>
+          <div class="cta"><a href={d.url}>Open →</a></div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+<section>
+  <div class="wrap">
+    <h2>Open source</h2>
+    <p class="sec-note">Selected repositories from <a href="https://github.com/cryptoecc">github.com/cryptoecc</a>.</p>
+    <div class="cards">
+      {repos.map(r => (
+        <div class="card">
+          <div class="tag noise">github</div>
+          <h3>{r.name}</h3>
+          <p>{r.desc}</p>
+          <div class="cta"><a href={r.url}>Repository →</a></div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+</Base>

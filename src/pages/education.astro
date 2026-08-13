@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const courses = [
+  { name: 'Information Theory', when: 'Fall 2026', link: 'https://lincolnkerry.github.io/infotheory-2026/', live: true, desc: 'EC5301 — with AI TA and AI-graded homework. The pilot of our AI-native education format.' },
+  { name: 'Generative AI and Blockchain', when: 'Spring 2026', desc: 'Graduate course on generative AI systems and blockchain convergence.' },
+  { name: 'Blockchain and Future Society', when: 'STAR-MOOC', desc: 'Open online course, offered since 2018.' },
+  { name: 'Channel Coding Theory · Compressed Sensing · Wireless Communications', when: 'Archive', desc: 'Graduate course archive dating to 2009.' },
+];
+---
+<Base title="Education · INFONET @ GIST">
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Education</div>
+    <h1>Courses &amp; lectures</h1>
+    <p class="sub">Courses with AI teaching assistants and automated grading, public lectures on YouTube, and interactive learning modules to come.</p>
+  </div>
+</header>
+<section>
+  <div class="wrap">
+    <div class="cards">
+      {courses.map(c => (
+        <div class="card">
+          <div class="tag">{c.when}</div>
+          <h3>{c.name}</h3>
+          <p>{c.desc}</p>
+          {c.link && <div class="cta"><a href={c.link}>{c.live ? 'Course site →' : 'Details →'}</a></div>}
+        </div>
+      ))}
+    </div>
+    <p class="sec-note" style="margin-top:20px">
+      More: <a href={`${base}/archive/courses-wp`}>full course archive (2002–2026)</a> ·
+      <a href={`${base}/archive/lectures`}>public lectures &amp; manuscripts (2016–2025)</a> ·
+      <a href="https://www.youtube.com/@heung-noleelabgist2902/videos">lab YouTube channel</a> ·
+      <a href={`${base}/archive/media`}>media coverage</a>.
+    </p>
+  </div>
+</section>
+</Base>

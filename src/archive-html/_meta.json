@@ -1,0 +1,42 @@
+{
+ "professor": {
+  "title": "Professor",
+  "wp_id": "28002"
+ },
+ "professor-kor": {
+  "title": "Professor(kor)",
+  "wp_id": "27999"
+ },
+ "members": {
+  "title": "Members",
+  "wp_id": "28054"
+ },
+ "alumni": {
+  "title": "Alumni",
+  "wp_id": "28125"
+ },
+ "lectures": {
+  "title": "Lectures",
+  "wp_id": "27977"
+ },
+ "awards": {
+  "title": "Awards",
+  "wp_id": "1859"
+ },
+ "projects-wp": {
+  "title": "Projects",
+  "wp_id": "28728"
+ },
+ "upcoming-projects-wp": {
+  "title": "Upcoming Projects",
+  "wp_id": "30993"
+ },
+ "courses-wp": {
+  "title": "Courses",
+  "wp_id": "27817"
+ },
+ "media": {
+  "title": "Media",
+  "wp_id": "1698"
+ }
+}
