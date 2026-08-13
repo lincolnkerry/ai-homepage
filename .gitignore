@@ -1,4 +1,5 @@
 node_modules/
 dist/
+dist-concierge/
 .astro/
 .DS_Store
