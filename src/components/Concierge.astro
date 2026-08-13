@@ -1,0 +1,134 @@
+---
+// Site-wide AI concierge: instant local search now; LLM answers when the
+// Cloudflare Worker endpoint is live (see workers/README.md).
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<div id="cg-root">
+  <button id="cg-fab" aria-label="Ask INFONET">✳ Ask INFONET</button>
+  <div id="cg-panel" hidden>
+    <div id="cg-head">
+      <strong>INFONET Concierge</strong>
+      <button id="cg-close" aria-label="Close">×</button>
+    </div>
+    <div id="cg-body">
+      <p class="cg-hint">Ask about our research, papers, courses, or services — Korean or English.</p>
+      <div id="cg-out"></div>
+    </div>
+    <form id="cg-form">
+      <input id="cg-q" type="text" placeholder="e.g. compressed sensing 논문 / how to apply" autocomplete="off" />
+      <button type="submit">Ask</button>
+    </form>
+    <p class="cg-foot">
+      Deep questions: <a href="https://github.com/lincolnkerry/ai-homepage/issues">GitHub Q&amp;A</a> ·
+      <a href="mailto:heungno@gist.ac.kr">heungno@gist.ac.kr</a>
+    </p>
+  </div>
+</div>
+
+<style>
+#cg-fab{position:fixed;right:22px;bottom:22px;z-index:50;background:var(--signal);color:#fff;border:0;border-radius:24px;padding:11px 18px;font-family:var(--mono);font-size:.85rem;cursor:pointer;box-shadow:0 2px 12px rgba(14,110,88,.35)}
+#cg-fab:hover{filter:brightness(1.1)}
+#cg-panel{position:fixed;right:22px;bottom:76px;z-index:50;width:min(380px,calc(100vw - 44px));max-height:70vh;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 30px rgba(24,36,48,.18)}
+#cg-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--serif)}
+#cg-close{background:none;border:0;font-size:1.2rem;cursor:pointer;color:var(--ink-soft)}
+#cg-body{padding:12px 16px;overflow-y:auto;flex:1;font-size:.88rem}
+.cg-hint{color:var(--ink-soft);font-size:.82rem;margin-bottom:8px}
+#cg-form{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
+#cg-q{flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:4px;font-family:var(--sans);font-size:.85rem}
+#cg-form button{background:var(--signal);color:#fff;border:0;border-radius:4px;padding:8px 14px;font-family:var(--mono);font-size:.8rem;cursor:pointer}
+.cg-foot{padding:8px 16px 12px;font-size:.72rem;color:var(--ink-soft);font-family:var(--mono)}
+.cg-a{background:var(--accent-bg);border-radius:6px;padding:10px 12px;margin-bottom:10px;white-space:pre-wrap}
+.cg-r{border-bottom:1px solid var(--grid);padding:7px 0}
+.cg-r a{font-weight:600}
+.cg-r p{color:var(--ink-soft);font-size:.8rem;margin-top:2px}
+.cg-status{font-family:var(--mono);font-size:.75rem;color:var(--ink-soft);margin:6px 0}
+</style>
+
+<script is:inline define:vars={{ base }}>
+(function () {
+  var ENDPOINT = 'https://infonet-concierge.heungno.workers.dev/chat';
+  var fab = document.getElementById('cg-fab'), panel = document.getElementById('cg-panel');
+  var out = document.getElementById('cg-out'), form = document.getElementById('cg-form');
+  var input = document.getElementById('cg-q');
+  var index = null;
+
+  fab.addEventListener('click', function () {
+    panel.hidden = !panel.hidden;
+    if (!panel.hidden) { input.focus(); loadIndex(); }
+  });
+  document.getElementById('cg-close').addEventListener('click', function () { panel.hidden = true; });
+
+  function loadIndex() {
+    if (index) return Promise.resolve(index);
+    return fetch(base + '/search-index.json').then(function (r) { return r.json(); })
+      .then(function (d) { index = d; return d; });
+  }
+
+  function tokenize(s) {
+    return s.toLowerCase().split(/[^a-z0-9가-힣]+/).filter(function (t) { return t.length > 1; });
+  }
+
+  function search(q, k) {
+    var qt = tokenize(q);
+    var scored = index.map(function (d) {
+      var hay = (d.t + ' ' + d.s + ' ' + d.k).toLowerCase();
+      var score = 0;
+      for (var i = 0; i < qt.length; i++) {
+        if (hay.indexOf(qt[i]) >= 0) score += 1;
+        if (d.t.toLowerCase().indexOf(qt[i]) >= 0) score += 2;
+      }
+      return { d: d, score: score };
+    }).filter(function (x) { return x.score > 0; });
+    scored.sort(function (a, b) { return b.score - a.score; });
+    return scored.slice(0, k).map(function (x) { return x.d; });
+  }
+
+  function esc(s) {
+    var d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+  }
+
+  function renderResults(hits) {
+    if (!hits.length) return '<p class="cg-status">No matches on the site for that query.</p>';
+    var h = '<p class="cg-status">Related on this site:</p>';
+    for (var i = 0; i < hits.length; i++) {
+      var d = hits[i];
+      var url = d.u.indexOf('http') === 0 ? d.u : base + d.u;
+      h += '<div class="cg-r"><a href="' + url + '">' + esc(d.t) + '</a><p>' +
+        esc((d.s || d.k).slice(0, 140)) + '…</p></div>';
+    }
+    return h;
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var q = input.value.trim();
+    if (!q) return;
+    out.innerHTML = '<p class="cg-status">Searching…</p>';
+    loadIndex().then(function () {
+      var hits = search(q, 5);
+      out.innerHTML = renderResults(hits);
+      askLLM(q, hits);
+    });
+  });
+
+  function askLLM(q, hits) {
+    var ansBox = document.createElement('div');
+    ansBox.className = 'cg-a';
+    ansBox.textContent = 'Thinking…';
+    out.insertBefore(ansBox, out.firstChild);
+    var ctx = hits.map(function (d) { return d.t + ': ' + (d.s || d.k).slice(0, 300); });
+    fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, context: ctx }),
+    }).then(function (r) {
+      if (!r.ok) throw new Error('bad status');
+      return r.json();
+    }).then(function (d) {
+      ansBox.textContent = d.answer;
+    }).catch(function () {
+      ansBox.textContent = 'The AI answer service is not live yet — the links below are matched from the site. For a detailed answer, open a GitHub Q&A issue (mention @claude) or email heungno@gist.ac.kr.';
+    });
+  }
+})();
+</script>
