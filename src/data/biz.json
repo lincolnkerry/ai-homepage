@@ -29,10 +29,10 @@
     ]
   },
   {
-    "name": "GIST BizRouter",
-    "tag": "Academic LLM Gateway",
+    "name": "PrivateRouter",
+    "tag": "Private LLM Router",
     "url": "",
-    "summary": "An academic LLM gateway routing GIST members' requests to the best model at the lowest cost. Pilot running with INFONET members.",
+    "summary": "A privacy-first LLM router that sends each request to the best model at the lowest cost — while sensitive data stays under the user's control. Built on our own routing research; pilot running with GIST members.",
     "links": []
   }
 ]
