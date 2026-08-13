@@ -50,9 +50,19 @@ ARCHIVE_PAGES = {  # post_id -> slug
 }
 
 
+EMAIL_RE = re.compile(r'([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})')
+
+
+def obfuscate_emails(text):
+    """name@domain -> name [at] domain, and strip mailto: hrefs (anti-scraper)."""
+    text = re.sub(r'href="mailto:[^"]*"', 'href="#"', text)
+    return EMAIL_RE.sub(r'\1 [at] \2', text)
+
+
 def clean_wp_html(raw):
     """Remove wp block comments; return soup."""
     raw = re.sub(r'<!--\s*/?wp:[^>]*-->', '', raw or '')
+    raw = obfuscate_emails(raw)
     return BeautifulSoup(raw, 'html.parser')
 
 
