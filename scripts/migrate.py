@@ -45,6 +45,8 @@ ARCHIVE_PAGES = {  # post_id -> slug
     '28002': 'professor', '27999': 'professor-kor', '28054': 'members', '28125': 'alumni',
     '27977': 'lectures', '1859': 'awards', '28728': 'projects-wp', '30993': 'upcoming-projects-wp',
     '27817': 'courses-wp', '1698': 'media',
+    '30476': 'genai-blockchain', '30270': 'information-theory-2025',
+    '6738': 'blockchain-future-society', '336': 'compressive-sensing',
 }
 
 
