@@ -84,14 +84,14 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     var d = document.createElement('div'); d.textContent = s; return d.innerHTML;
   }
 
-  function renderResults(hits) {
-    if (!hits.length) return '<p class="cg-status">No matches on the site for that query.</p>';
-    var h = '<p class="cg-status">Related on this site:</p>';
-    for (var i = 0; i < hits.length; i++) {
-      var d = hits[i];
+  function renderResults(hits, label, limit) {
+    var shown = hits.slice(0, limit || 2);
+    if (!shown.length) return '<p class="cg-status">No matching source pages found on the site.</p>';
+    var h = '<p class="cg-status">' + esc(label || 'Source pages:') + '</p>';
+    for (var i = 0; i < shown.length; i++) {
+      var d = shown[i];
       var url = d.u.indexOf('http') === 0 ? d.u : base + d.u;
-      h += '<div class="cg-r"><a href="' + url + '">' + esc(d.t) + '</a><p>' +
-        esc((d.s || d.k).slice(0, 140)) + '…</p></div>';
+      h += '<div class="cg-r"><a href="' + url + '">' + esc(d.t) + '</a></div>';
     }
     return h;
   }
@@ -103,7 +103,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     out.innerHTML = '<p class="cg-status">Searching…</p>';
     loadIndex().then(function () {
       var hits = search(q, 5);
-      out.innerHTML = renderResults(hits);
+      out.innerHTML = renderResults(hits, 'Source links:', 2);
       askLLM(q, hits);
     });
   });
@@ -138,7 +138,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       return r.json();
     }).then(function (d) {
       if (!d) return;
-      ansBox.textContent = d.answer;
+      var labels = {
+        PRAX: 'AI answer',
+        'PRAX-safety': 'AI answer',
+        fallback: 'AI 답변을 받지 못했습니다 — 아래 사이트 검색 결과를 참고하세요'
+      };
+      ansBox.textContent = (labels[d.agent] || 'AI answer') + ':\n\n' + d.answer;
     }).catch(function () {
       if (timer) clearTimeout(timer);
       ansBox.textContent = 'The AI answer service is not live yet — the links below are matched from the site. For a detailed answer, use the site inquiry link.';
