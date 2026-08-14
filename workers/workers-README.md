@@ -22,6 +22,17 @@ site from depending on a changing quick-tunnel hostname.
 5. Test:
    `curl -X POST https://infonet-concierge.heungno.workers.dev/chat -H 'Content-Type: application/json' -d '{"question":"연구실 입학 문의는 어떻게 하나요?","context":[]}'`
 
+CLI deploy path once authenticated:
+
+```bash
+npx wrangler deploy
+npx wrangler secret put CONCIERGE_ORIGIN
+# paste: https://<current-prax-tunnel>.trycloudflare.com
+curl -X POST https://infonet-concierge.heungno.workers.dev/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"연구실 입학 문의는 어떻게 하나요?","context":[]}'
+```
+
 When PRAX's quick tunnel rotates, update only the Worker's `CONCIERGE_ORIGIN`.
 The static site endpoint does not need to change.
 
