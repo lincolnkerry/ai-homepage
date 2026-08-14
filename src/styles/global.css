@@ -19,7 +19,10 @@ a:hover{text-decoration:underline}
 /* nav */
 nav{position:sticky;top:0;background:rgba(250,249,245,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);z-index:10}
 nav .wrap{display:flex;align-items:center;gap:20px;height:52px;font-size:.85rem;overflow-x:auto}
-nav .brand{font-family:var(--mono);font-weight:500;color:var(--ink);white-space:nowrap}
+nav .brand{font-family:var(--mono);font-weight:600;color:var(--ink);white-space:nowrap}
+nav .gist-link{display:inline-flex;align-items:center;justify-content:center;background:transparent;padding:0;white-space:nowrap}
+nav .gist-link img{display:block;width:auto;height:30px}
+nav .gist-link:hover{text-decoration:none;filter:brightness(1.05)}
 nav a.nl{color:var(--ink-soft);white-space:nowrap}
 nav a.nl:hover{color:var(--signal);text-decoration:none}
 nav a.nl.active{color:var(--signal);font-weight:600}
