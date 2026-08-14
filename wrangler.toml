@@ -1,8 +1,3 @@
 name = "infonet-concierge"
-main = "workers/concierge.js"
+main = "workers/concierge-proxy.js"
 compatibility_date = "2026-08-14"
-
-# Non-secret site origin for CORS. Set/update CONCIERGE_ORIGIN in the
-# Cloudflare dashboard or with `wrangler secret put CONCIERGE_ORIGIN`.
-[vars]
-ALLOWED_ORIGIN = "https://heungno.net"

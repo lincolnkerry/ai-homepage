@@ -28,6 +28,11 @@ function json(res, status, payload) {
 }
 
 function clientIp(req) {
+  const secret = process.env.CONCIERGE_PROXY_SECRET;
+  if (secret && req.headers['x-proxy-secret'] === secret) {
+    const v = String(req.headers['x-visitor-ip'] || '').trim();
+    if (v) return v;
+  }
   const cfIp = String(req.headers['cf-connecting-ip'] || '').trim();
   if (cfIp) return cfIp;
   const forwarded = String(req.headers['x-forwarded-for'] || '').split(',').pop().trim();
