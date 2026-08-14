@@ -43,7 +43,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 <script is:inline define:vars={{ base }}>
 (function () {
-  var ENDPOINT = 'https://worked-father-jar-minnesota.trycloudflare.com/chat';
+  var ENDPOINT = 'https://infonet-concierge.heungno.workers.dev/chat';
   var fab = document.getElementById('cg-fab'), panel = document.getElementById('cg-panel');
   var out = document.getElementById('cg-out'), form = document.getElementById('cg-form');
   var input = document.getElementById('cg-q');
@@ -141,7 +141,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       var labels = {
         PRAX: 'AI answer',
         'PRAX-safety': 'AI answer',
-        fallback: 'AI 답변을 받지 못했습니다 — 아래 사이트 검색 결과를 참고하세요'
+        fallback: 'AI 답변을 받지 못했습니다 — 아래 사이트 검색 결과를 참고하세요',
+        offline: 'AI 응답 서버에 연결하지 못했습니다 — 아래 사이트 검색 결과를 참고하세요'
       };
       ansBox.textContent = (labels[d.agent] || 'AI answer') + ':\n\n' + d.answer;
     }).catch(function () {
