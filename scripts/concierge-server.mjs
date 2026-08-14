@@ -18,6 +18,7 @@ function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Max-Age', '86400');
 }
 
 function json(res, status, payload) {
@@ -77,6 +78,18 @@ function publicAnswer(s) {
     .trim();
 }
 
+function clampAnswer(s) {
+  const clean = publicAnswer(s);
+  const paras = clean.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const dropped = paras.length > 2;
+  let answer = (paras.length ? paras.slice(0, 2) : [clean]).join('\n\n');
+  const hangul = (answer.match(/[가-힣]/g) || []).length;
+  const cap = hangul / Math.max(answer.length, 1) > 0.3 ? 400 : 900;
+  if (answer.length > cap) answer = answer.slice(0, cap).replace(/[\s,.;:!?，。！？]*$/, '') + '…';
+  else if (dropped) answer += ' …';
+  return answer;
+}
+
 function tokenize(s) {
   return String(s || '').toLowerCase().split(/[^a-z0-9가-힣]+/).filter((t) => t.length > 1);
 }
@@ -109,7 +122,7 @@ function hardSafetyAnswer(question) {
   const restrictedProduct = /privaterouter|private router|프라이빗라우터|saegyeol|새결|autosqt|auto-sqt|private\s+(ai|llm)\s+routing|private\s+routing|internal\s+routing|비공개\s*라우팅|프라이빗\s*라우팅/.test(q);
   const mechanismAsk = /원리|구조|구현|알고리즘|메커니즘|작동|동작|라우팅.*방식|mechanism|architecture|implementation|algorithm|internal|how.*work|how.*route|routing.*work/.test(q);
   if (restrictedProduct && mechanismAsk) {
-    return '해당 질문은 PrivateRouter/새결AI/AutoSQT와 같은 미공개·특허성 기술의 내부 메커니즘 설명에 해당할 수 있어 공개 채널에서는 원리나 구현 구조를 설명하지 않겠습니다. 공개 가능한 범위에서는, INFONET은 민감한 데이터 통제와 AI 활용 효율을 함께 고려하는 private AI/LLM 서비스 방향을 연구하고 있습니다. 협업이나 평가 목적이라면 사이트의 문의 링크를 통해 별도 검토를 요청해 주세요.';
+    return '해당 질문은 미공개·특허성 기술의 내부 메커니즘에 해당할 수 있어 공개 채널에서는 원리나 구현 구조를 설명하지 않겠습니다. 공개 가능한 범위에서는 INFONET이 데이터 통제와 AI 활용 효율을 함께 고려하는 private AI/LLM 서비스 방향을 연구하고 있다고 말씀드릴 수 있습니다. 협업이나 평가 목적이면 사이트 문의 링크를 이용해 주세요.';
   }
   return null;
 }
@@ -141,7 +154,7 @@ ${context || '(none)'}
 
 Answer rules:
 - Reply in the same language as the visitor question unless the visitor asks otherwise.
-- Be concise, helpful, and factual. Target 120-180 words for normal questions.
+- Be concise and factual. Hard cap: at most two short paragraphs, and at most 120 words in English OR 400 characters in Korean. Korean answers must respect the character cap regardless of sentence count. Avoid lists unless asked.
 - Use the retrieved public site context when relevant and mention page names or URLs briefly.
 - Do not reveal private/patent-sensitive mechanisms for PrivateRouter, SaeGyeol AI/새결AI, AutoSQT, or unpublished internal work. Product names and public benefits are OK; mechanisms are not.
 - Do not publish plaintext email addresses. Say "the site email link" instead.
@@ -209,17 +222,17 @@ const server = http.createServer(async (req, res) => {
     const matched = rankDocs(question, seedContext, docs);
     const hardAnswer = hardSafetyAnswer(question);
     if (hardAnswer) {
-      return json(res, 200, { answer: publicAnswer(hardAnswer), sources: matched.slice(0, 5).map((d) => ({ title: d.title, url: d.url })), agent: 'PRAX-safety' });
+      return json(res, 200, { answer: clampAnswer(hardAnswer), sources: matched.slice(0, 2).map((d) => ({ title: d.title, url: d.url })), agent: 'PRAX-safety' });
     }
     const release = acquireHermesSlot();
     if (!release) return json(res, 429, { error: 'busy' });
     const prompt = buildPrompt(question, seedContext, matched);
     try {
       const answer = await askPrax(prompt);
-      json(res, 200, { answer: publicAnswer(answer), sources: matched.slice(0, 5).map((d) => ({ title: d.title, url: d.url })), agent: 'PRAX' });
+      json(res, 200, { answer: clampAnswer(answer), sources: matched.slice(0, 2).map((d) => ({ title: d.title, url: d.url })), agent: 'PRAX' });
     } catch (err) {
       console.warn('Concierge Hermes fallback:', String(err && err.message ? err.message : err).slice(0, 500));
-      json(res, 200, { answer: publicAnswer(fallback(question, matched)), sources: matched.slice(0, 5).map((d) => ({ title: d.title, url: d.url })), agent: 'fallback' });
+      json(res, 200, { answer: clampAnswer(fallback(question, matched)), sources: matched.slice(0, 2).map((d) => ({ title: d.title, url: d.url })), agent: 'fallback' });
     } finally {
       release();
     }
