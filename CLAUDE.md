@@ -50,7 +50,7 @@ code.
 | --- | ---: | --- | --- |
 | `PORT` | `8787` | Local HTTP port. Server binds `127.0.0.1`; expose through Cloudflare Tunnel or another local-only proxy. | `8787` unless occupied |
 | `CONCIERGE_CORPUS` | `dist-concierge/corpus.json` | Built Concierge corpus path. Generate with `npm run concierge:index`. | default |
-| `HERMES_BIN` | `hermes` | Hermes CLI used for PRAX generation. | absolute path, e.g. `/Users/heungno/.hermes/hermes-agent/venv/bin/hermes` |
+| `HERMES_BIN` | `hermes` | Hermes CLI used for PRAX generation. | absolute path, e.g. `/path/to/hermes` |
 | `CONCIERGE_HERMES_TIMEOUT_MS` | `10000` | Max time to wait for Hermes before returning fallback. | `10000` |
 | `CONCIERGE_MAX_CONCURRENT` | `6` | Max concurrent Hermes child processes. Measure one Hermes RSS first; if `6 * RSS` exceeds 60% of available RAM, lower to `4`. | `6` on PRAX after RSS check |
 | `CONCIERGE_RATE_WINDOW_MS` | `60000` | Per-IP rate-limit window. | `60000` |
