@@ -38,3 +38,25 @@ It is designed to be operated by AI agents under human review.
 
 - `npm ci && npm run build` — output in `dist/`
 - `BASE_PATH=/ai-homepage` for github.io preview; unset for heungno.net production.
+
+## Concierge operation variables
+
+The public Concierge bridge is implemented in `scripts/concierge-server.mjs`; the
+widget endpoint constant lives in `src/components/Concierge.astro`. Keep runtime
+settings in the server launch environment (launchd/script/.env), not in visitor
+code.
+
+| Variable | Code default | Meaning | Recommended operation value |
+| --- | ---: | --- | --- |
+| `PORT` | `8787` | Local HTTP port. Server binds `127.0.0.1`; expose through Cloudflare Tunnel or another local-only proxy. | `8787` unless occupied |
+| `CONCIERGE_CORPUS` | `dist-concierge/corpus.json` | Built Concierge corpus path. Generate with `npm run concierge:index`. | default |
+| `HERMES_BIN` | `hermes` | Hermes CLI used for PRAX generation. | absolute path, e.g. `/path/to/hermes` |
+| `CONCIERGE_HERMES_TIMEOUT_MS` | `10000` | Max time to wait for Hermes before returning fallback. | `10000` |
+| `CONCIERGE_MAX_CONCURRENT` | `6` | Max concurrent Hermes child processes. Measure one Hermes RSS first; if `6 * RSS` exceeds 60% of available RAM, lower to `4`. | `6` on PRAX after RSS check |
+| `CONCIERGE_RATE_WINDOW_MS` | `60000` | Per-IP rate-limit window. | `60000` |
+| `CONCIERGE_RATE_LIMIT_MAX` | `12` | Per-IP requests per window. Keep below or near total service capacity; do not raise for NAT demos without a separate allowlist PR. | `12` |
+
+For lectures/demos behind campus NAT, prefer a future `CONCIERGE_RATE_EXEMPT_IPS`
+allowlist PR over raising `CONCIERGE_RATE_LIMIT_MAX` globally. A separate follow-up
+PR should add timeout escalation from SIGTERM to SIGKILL after a short grace period
+so stuck Hermes children cannot outlive their semaphore slots.
