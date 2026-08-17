@@ -6,6 +6,7 @@ const MAX_CONTEXT = 8;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 12;
 const PRAX_TIMEOUT_MS = 8_000;
+const RATE_LIMIT_ANSWER = '요청이 많습니다. 잠시 후 다시 시도해 주세요. Too many requests — please try again shortly.';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -25,9 +26,13 @@ function json(payload, status = 200) {
   });
 }
 
-function offline(question = '') {
+function isEnglishQuestion(question = '') {
   const q = String(question || '');
-  const english = /^[\x00-\x7F\s\p{P}\p{S}]*$/u.test(q) && !/[가-힣]/.test(q);
+  return /^[\x00-\x7F\s\p{P}\p{S}]*$/u.test(q) && !/[가-힣]/.test(q);
+}
+
+function offline(question = '') {
+  const english = isEnglishQuestion(question);
   return {
     answer: english
       ? 'I found site pages related to this question. For more details, please use the site inquiry link.'
@@ -42,6 +47,13 @@ function clientIp(req) {
   if (cfIp) return cfIp;
   const forwarded = String(req.headers.get('x-forwarded-for') || '').split(',').pop().trim();
   return forwarded || 'unknown';
+}
+
+async function sessionId(ip, env) {
+  const day = new Date().toISOString().slice(0, 10);
+  const data = new TextEncoder().encode(`${ip}|${day}|${env.PROXY_SECRET || 'salt'}`);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(buf)].slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function sanitizeUntrusted(s) {
@@ -110,7 +122,7 @@ function rankDocs(question, seedContext, docs) {
 }
 
 function fallback(question, docs) {
-  const english = /^[\x00-\x7F\s\p{P}\p{S}]*$/u.test(String(question || '')) && !/[가-힣]/.test(String(question || ''));
+  const english = isEnglishQuestion(question);
   const refs = docs.slice(0, 3).map((d) => `${d.title} (${d.url})`).join('; ');
   if (refs) {
     return english
@@ -128,7 +140,7 @@ function hardSafetyAnswer(question) {
   const mechanismAsk = /원리|구조|구현|알고리즘|메커니즘|작동|동작|라우팅.*방식|mechanism|architecture|implementation|algorithm|internal|how.*work|how.*route|routing.*work/.test(q);
   const sensitiveAsk = /특허|청구항|신규성|비공개|미공개|영업\s*비밀|기밀|patent|claims?|novelty|trade\s*secret|unpublished|confidential|proprietary/.test(q);
   if (restrictedProduct && (mechanismAsk || sensitiveAsk)) {
-    const english = /^[\x00-\x7F\s\p{P}\p{S}]*$/u.test(String(question || '')) && !/[가-힣]/.test(String(question || ''));
+    const english = isEnglishQuestion(question);
     return english
       ? 'That question may involve unpublished or patent-sensitive internal mechanisms, so I will not describe the principles, implementation structure, claims, or confidential details in a public channel. Publicly, INFONET studies private AI/LLM service directions that consider both data control and efficient AI use. For collaboration or evaluation, please use the site inquiry link.'
       : '해당 질문은 미공개·특허성 기술의 내부 메커니즘이나 비공개 상세에 해당할 수 있어 공개 채널에서는 원리, 구현 구조, 청구항, 기밀 내용을 설명하지 않겠습니다. 공개 가능한 범위에서는 INFONET이 데이터 통제와 AI 활용 효율을 함께 고려하는 private AI/LLM 서비스 방향을 연구하고 있다고 말씀드릴 수 있습니다. 협업이나 평가 목적이면 사이트 문의 링크를 이용해 주세요.';
@@ -172,6 +184,27 @@ Answer rules:
 - Return only the answer text. Do not include tool logs, JSON, markdown fences, or a preamble.`;
 }
 
+function profiles(env) {
+  return {
+    default: env.MODEL_DEFAULT,
+    long: env.MODEL_LONG,
+    cheap: env.MODEL_CHEAP,
+  };
+}
+
+function pickProfile(env, promptChars, forced) {
+  const p = profiles(env);
+  if (forced && p[forced]) return forced;
+  if (promptChars > Number(env.LONG_PROMPT_CHARS || 40000)) return 'long';
+  return 'default';
+}
+
+function fallbackOrder(env, selectedProfile, forced) {
+  if (forced) return [selectedProfile];
+  if (selectedProfile === 'long') return ['long'];
+  return (env.MODEL_FALLBACK_ORDER || selectedProfile).split(',').map((x) => x.trim()).filter(Boolean);
+}
+
 async function loadDocs(env) {
   if (cachedDocs) return cachedDocs;
   if (!corpusPromise) {
@@ -192,14 +225,29 @@ async function loadDocs(env) {
   return corpusPromise;
 }
 
-async function askWorkersAi(env, prompt) {
+async function runWorkersAi(env, modelId, prompt) {
   const messages = [{ role: 'user', content: prompt }];
-  const response = await env.AI.run(env.MODEL, { messages }, { gateway: { id: 'infonet-concierge' } });
+  const opts = env.AI_GATEWAY_ID ? { gateway: { id: env.AI_GATEWAY_ID } } : undefined;
+  const response = await env.AI.run(modelId, { messages }, opts);
   const text = typeof response === 'string'
     ? response
     : response?.response || response?.result?.response || response?.text || response?.answer || '';
   if (!text) throw new Error('Workers AI returned empty answer');
   return text;
+}
+
+async function askWorkersAi(env, prompt, selectedProfile, forcedProfile) {
+  const p = profiles(env);
+  for (const name of fallbackOrder(env, selectedProfile, forcedProfile)) {
+    const id = p[name];
+    if (!id) continue;
+    try {
+      return { text: await runWorkersAi(env, id, prompt), profile: name, model: id };
+    } catch (e) {
+      console.log(`model ${name} failed:`, String(e && e.message ? e.message : e).slice(0, 120));
+    }
+  }
+  throw new Error('all models failed');
 }
 
 async function proxyPrax(req, env, rawBody) {
@@ -218,64 +266,116 @@ async function proxyPrax(req, env, rawBody) {
     });
     if (upstream.status >= 500) return null;
     const text = await upstream.text();
-    return new Response(text, {
-      status: upstream.status,
-      headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' },
-    });
+    let payload;
+    try { payload = JSON.parse(text || '{}'); } catch { payload = { answer: text, sources: [], agent: 'PRAX' }; }
+    return { payload, status: upstream.status };
   } catch (e) {
     console.log('prax upstream failure:', String((e && e.message) || e).slice(0, 200));
     return null;
   }
 }
 
+function sourceList(sources) {
+  return Array.isArray(sources) ? sources : [];
+}
+
+function logRecord({ env, session, question, answer, agent, profile, model, matched, latencyMs, status, sources }) {
+  console.log(JSON.stringify({
+    ev: 'concierge',
+    ts: new Date().toISOString(),
+    session,
+    question,
+    answer,
+    lang: /[가-힣]/.test(question) ? 'ko' : 'en',
+    agent,
+    profile,
+    model,
+    doc_ids: matched.map((d) => d.url),
+    latency_ms: latencyMs,
+    status,
+    answer_len: answer.length,
+    question_len: question.length,
+    sources: sources.length,
+  }));
+}
+
+async function respond(payload, status, meta) {
+  const answer = String(payload.answer || '');
+  const agent = String(payload.agent || 'offline');
+  const sources = sourceList(payload.sources);
+  logRecord({
+    ...meta,
+    answer,
+    agent,
+    profile: payload.profile || meta.profile || '',
+    model: payload.model || meta.model || '',
+    status,
+    sources,
+    latencyMs: Date.now() - meta.t0,
+  });
+  return json({ ...payload, answer, sources, agent }, status);
+}
+
 export default {
   async fetch(req, env) {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
+    const t0 = Date.now();
     const url = new URL(req.url);
     if (req.method !== 'POST' || !url.pathname.endsWith('/chat')) {
       return json({ error: 'POST /chat' }, 404);
     }
 
     const ip = clientIp(req);
-    if (isRateLimited(ip)) return json({ error: 'rate limited' }, 429);
-
+    const session = await sessionId(ip, env);
     const rawBody = await req.text();
     if (rawBody.length > 100_000) return json({ error: 'payload too large' }, 413);
 
     let body;
     try { body = JSON.parse(rawBody || '{}'); } catch { return json({ error: 'bad json' }, 400); }
 
-    if (body.engine === 'prax') {
-      const praxResponse = await proxyPrax(req, env, rawBody);
-      if (praxResponse) return praxResponse;
-    }
-
     const question = String(body.question || '').slice(0, 2000).trim();
     const seedContext = Array.isArray(body.context) ? body.context.slice(0, 8).map((x) => String(x).slice(0, 500)) : [];
     if (!question) return json({ error: 'no question' }, 400);
+
+    const baseMeta = { env, session, question, matched: [], t0, profile: '', model: '' };
+    if (isRateLimited(ip)) {
+      return respond({ answer: RATE_LIMIT_ANSWER, sources: [], agent: 'rate-limited' }, 429, { ...baseMeta, profile: 'rate-limited' });
+    }
+
+    if (body.engine === 'prax') {
+      const prax = await proxyPrax(req, env, rawBody);
+      if (prax) return respond(prax.payload, prax.status, { ...baseMeta, profile: 'prax' });
+    }
 
     let docs;
     try {
       docs = await loadDocs(env);
     } catch (e) {
       console.log('corpus load failure:', String((e && e.message) || e).slice(0, 200));
-      return json(offline(question), 200);
+      return respond(offline(question), 200, baseMeta);
     }
 
     const matched = rankDocs(question, seedContext, docs);
     const sources = matched.slice(0, 2).map((d) => ({ title: d.title, url: d.url }));
+    const meta = { ...baseMeta, matched };
     const hardAnswer = hardSafetyAnswer(question);
     if (hardAnswer) {
-      return json({ answer: clampAnswer(hardAnswer), sources, agent: 'PRAX-safety' }, 200);
+      return respond({ answer: clampAnswer(hardAnswer), sources, agent: 'PRAX-safety' }, 200, { ...meta, profile: 'safety' });
     }
 
     const prompt = buildPrompt(question, seedContext, matched);
+    const forced = (req.headers.get('x-concierge-profile') || '').trim();
+    const allowed = forced && req.headers.get('x-proxy-secret') === env.PROXY_SECRET;
+    const profile = pickProfile(env, prompt.length, allowed ? forced : null);
     try {
-      const answer = await askWorkersAi(env, prompt);
-      return json({ answer: clampAnswer(answer), sources, agent: 'workers-ai' }, 200);
+      const result = await askWorkersAi(env, prompt, profile, allowed ? forced : null);
+      return respond({ answer: clampAnswer(result.text), sources, agent: 'workers-ai', profile: result.profile, model: result.model }, 200, meta);
     } catch (err) {
       console.log('Workers AI fallback:', String(err && err.message ? err.message : err).slice(0, 500));
-      return json({ answer: clampAnswer(fallback(question, matched)), sources, agent: 'fallback' }, 200);
+      if (profile === 'long') {
+        return respond({ ...offline(question), sources, profile, model: profiles(env).long || '' }, 200, meta);
+      }
+      return respond({ answer: clampAnswer(fallback(question, matched)), sources, agent: 'offline', profile, model: '' }, 200, meta);
     }
   },
 };
@@ -291,4 +391,7 @@ export {
   fallback,
   clientIp,
   isRateLimited,
+  sessionId,
+  profiles,
+  pickProfile,
 };
