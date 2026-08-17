@@ -20,7 +20,7 @@ function json(payload, status) {
 
 function offline() {
   return {
-    answer: 'AI 응답 서버에 연결하지 못했습니다. 아래 사이트 검색 결과를 참고하시고, 자세한 문의는 사이트 문의 링크를 이용해 주세요. (The AI answer service is temporarily unreachable — please see the site links below.)',
+    answer: '이 질문과 관련된 사이트 페이지를 찾았습니다. 더 자세한 내용은 사이트 문의 링크를 이용해 주세요. (I found site pages related to this question. For more details, please use the site inquiry link.)',
     sources: [],
     agent: 'offline',
   };
@@ -50,6 +50,7 @@ export default {
         body,
         signal: AbortSignal.timeout(25000),
       });
+      if (upstream.status >= 500) return json(offline(), 200);
       const text = await upstream.text();
       return new Response(text, {
         status: upstream.status,
