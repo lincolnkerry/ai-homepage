@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "npm run concierge:index && astro build && node scripts/publish-concierge-corpus.mjs",
     "preview": "astro preview",
     "concierge:index": "node scripts/build-concierge-corpus.mjs",
     "concierge:serve": "npm run concierge:index && node scripts/concierge-server.mjs"

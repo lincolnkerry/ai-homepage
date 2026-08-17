@@ -1,3 +1,11 @@
 name = "infonet-concierge"
-main = "workers/concierge-proxy.js"
+main = "workers/concierge-ai.js"
 compatibility_date = "2026-08-14"
+
+[ai]
+binding = "AI"
+
+[vars]
+CONCIERGE_CORPUS_URL = "https://lincolnkerry.github.io/ai-homepage/concierge-corpus.json"
+MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
+CONCIERGE_ORIGIN = ""

@@ -138,14 +138,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       return r.json();
     }).then(function (d) {
       if (!d) return;
-      var labels = {
-        fallback: 'AI 답변을 받지 못했습니다 — 아래 사이트 검색 결과를 참고하세요',
-        offline: 'AI 응답 서버에 연결하지 못했습니다 — 아래 사이트 검색 결과를 참고하세요'
-      };
-      ansBox.textContent = labels[d.agent] ? labels[d.agent] + ':\n\n' + d.answer : d.answer;
+      ansBox.textContent = d.answer;
     }).catch(function () {
       if (timer) clearTimeout(timer);
-      ansBox.textContent = 'The AI answer service is not live yet — the links below are matched from the site. For a detailed answer, use the site inquiry link.';
+      var ko = /[가-힣]/.test(q);
+      ansBox.textContent = ko
+        ? '이 질문과 관련된 사이트 페이지를 찾았습니다. 더 자세한 내용은 사이트 문의 링크를 이용해 주세요.'
+        : 'I found site pages related to this question. For more details, please use the site inquiry link.';
     });
   }
 })();
